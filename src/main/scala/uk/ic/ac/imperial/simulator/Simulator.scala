@@ -42,7 +42,7 @@ object Simulator {
   def setupTaskScheduler(executors: Int, coresPerExec: Int, stopwatch: Stopwatch,
                          finishTimes: mutable.HashMap[Int, ArrayBuffer[Long]],
                          taskPrinter: mutable.ArrayBuffer[((String, Long), mutable.ArrayBuffer[(Int, Int, String)])],
-                         confs: (String, String)*): Unit = {
+                         confs: ArrayBuffer[(String, String)]): Unit = {
     val conf = new SparkConf().setMaster("local").setAppName("Simulator")
     confs.foreach { case (k, v) => conf.set(k, v) }
     sc = new SparkContext(conf)
@@ -58,13 +58,15 @@ object Simulator {
 
   def main(args: Array[String]): Unit = {
     val stopwatch = new Stopwatch
-    val executors = 1
-    val coresPerExec = 4
 
-    setupTaskScheduler(executors, coresPerExec, stopwatch, finishTimes, taskPrinter,
-//            confs = "spark.scheduler.mode" -> SchedulingMode.FIFO.toString)
-      //      confs = "spark.scheduler.mode" -> SchedulingMode.FAIR.toString, "spark.scheduler.allocation.file" -> "/Users/christo/Documents/Neptune/core/src/main/scala/org/apache/spark/scheduler/simulator/fairscheduler_simulator.xml")
-      confs = "spark.scheduler.mode" -> SchedulingMode.NEPTUNE.toString, "spark.neptune.task.coroutines" -> "true")
+    val simulatorConfiguration = JsonExtractor.fromJsonFileToObject("conf/simulator_configuration.json")
+
+    setupTaskScheduler(simulatorConfiguration.executors,
+      simulatorConfiguration.coresPerExec,
+      stopwatch,
+      finishTimes,
+      taskPrinter,
+      Configuration.getConfiguration(simulatorConfiguration.sparkSchedulerMode))
 
     taskScheduler.start()
     setupDAGScheduler()
@@ -72,8 +74,8 @@ object Simulator {
     // First Job
     val jobOneProperties = new Properties()
     jobOneProperties.setProperty("duration", "4")
-//    jobOneProperties.setProperty("spark.scheduler.pool", "batch")
-    jobOneProperties.setProperty("neptune_pri", "2")
+    jobOneProperties.setProperty("spark.scheduler.pool", "batch")
+//    jobOneProperties.setProperty("neptune_pri", "2")
     jobSubmitter.submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = jobOneProperties)
 
     // More jobs...
@@ -86,8 +88,8 @@ object Simulator {
     // Second Job
     val jobTwoProperties = new Properties()
     jobTwoProperties.setProperty("duration", "1")
-//    jobTwoProperties.setProperty("spark.scheduler.pool", "streaming")
-    jobTwoProperties.setProperty("neptune_pri", "1")
+    jobTwoProperties.setProperty("spark.scheduler.pool", "streaming")
+//    jobTwoProperties.setProperty("neptune_pri", "1")
     jobSubmitter.submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = jobTwoProperties)
 
     val inner = new Breaks
@@ -153,7 +155,6 @@ object Simulator {
         acc + entry._3*(entry._2 - entry._1)
       })
       System.out.println(timeline + " "*10 + stageAndTask + " "*10 + runtimes)
-//      System.out.println(" " * entry._2 + "|" * (entry._3 - entry._2) + " " * 10 + entry._1)
     }
   }
 }

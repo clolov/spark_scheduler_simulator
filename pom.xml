@@ -31,6 +31,11 @@
       <artifactId>coroutines_2.11</artifactId>
       <version>0.8-SNAPSHOT</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.json4s</groupId>
+      <artifactId>json4s-jackson_${scala.version}</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

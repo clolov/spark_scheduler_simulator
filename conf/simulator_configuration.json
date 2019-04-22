@@ -1,0 +1,5 @@
+{
+  "executors": 4,
+  "coresPerExec": 1,
+  "sparkSchedulerMode": "FIFO"
+}
