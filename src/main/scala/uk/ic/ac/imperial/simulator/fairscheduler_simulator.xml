@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<allocations>
+  <pool name="streaming">
+    <schedulingMode>FAIR</schedulingMode>
+    <weight>2</weight>
+  </pool>
+  <pool name="batch">
+    <schedulingMode>FAIR</schedulingMode>
+    <weight>1</weight>
+  </pool>
+</allocations>
