@@ -18,6 +18,9 @@
 package uk.ic.ac.imperial.simulator
 
 import org.apache.spark.{HashPartitioner, ShuffleDependency, SparkContext}
+import uk.ic.ac.imperial.simulator.JsonExtractor.Representation
+
+import scala.collection.mutable.ArrayBuffer
 
 object JobGenerator {
 
@@ -75,5 +78,20 @@ object JobGenerator {
     val shuffleDepB = new ShuffleDependency(rddB, new HashPartitioner(rddB.context.conf, 1))
 
     new MyRDD(sc, 1, List(shuffleDepA, shuffleDepB))
+  }
+
+  private[simulator] def generate_job_from_representation(sc: SparkContext, job: Representation): MyRDD = {
+    val stages = job.stages
+    val rdds = ArrayBuffer.empty[MyRDD]
+    val shuffleDependencies = ArrayBuffer.empty[ShuffleDependency[_, _, _]]
+
+    for (stage <- stages) {
+      val shuffleDependenciesOfStage = stage.dependsOn.map(_ - 1).map(index => shuffleDependencies(index))
+      val newRdd = new MyRDD(sc, 1, shuffleDependenciesOfStage)
+      rdds.+=(newRdd)
+      shuffleDependencies.+=(new ShuffleDependency(newRdd, new HashPartitioner(newRdd.context.conf, 1)))
+    }
+
+    rdds.last
   }
 }

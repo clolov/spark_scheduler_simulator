@@ -86,29 +86,6 @@ object Simulator {
     taskScheduler.start()
     setupDAGScheduler()
 
-    // First Job
-//    val jobOneProperties = new Properties()
-//    jobOneProperties.setProperty("duration", "4")
-//    jobOneProperties.setProperty("spark.scheduler.pool", "batch")
-////    jobOneProperties.setProperty("neptune_pri", "2")
-//    jobSubmitter.submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = jobOneProperties)
-
-    // More jobs...
-//    val jobsProperties = new Properties()
-//    jobsProperties.setProperty("duration", "2")
-//    jobsProperties.setProperty("spark.scheduler.pool", "batch")
-//    jobsProperties.setProperty("neptune_pri", "2")
-//    jobSubmitter.submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = jobsProperties)
-
-    // Second Job
-    val jobTwoProperties = new Properties()
-    jobTwoProperties.setProperty("duration", "1")
-//    jobTwoProperties.setProperty("spark.scheduler.pool", "streaming")
-////    jobTwoProperties.setProperty("neptune_pri", "1")
-//    jobSubmitter.submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = jobTwoProperties)
-
-//    jobSubmitter.submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = jobTwoProperties)
-
     val inner = new Breaks
 
     do {

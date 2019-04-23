@@ -34,7 +34,9 @@ object JsonExtractor {
     properties.setProperty("neptune_pri", neptunePri)
   }
 
-  case class Representation()
+  case class Representation(stages: List[Stage])
+
+  case class Stage(id: Int, dependsOn: List[Int])
 
   def fromJsonFileToObject(filename: String): Configuration = {
     val bufferedSource = Source.fromFile(filename).getLines.mkString

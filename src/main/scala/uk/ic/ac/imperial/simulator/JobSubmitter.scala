@@ -53,7 +53,7 @@ class JobSubmitter(dagScheduler: DAGScheduler) {
   }
 
   private[simulator] def submit(sc: SparkContext, job: Job): Int = {
-    submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = job.properties.properties)
+    submit(JobGenerator.generate_job_from_representation(sc, job.representation), Array(0), properties = job.properties.properties)
   }
 
 }
