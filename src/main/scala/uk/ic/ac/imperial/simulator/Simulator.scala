@@ -22,6 +22,7 @@ import java.util.Properties
 import org.apache.spark._
 import org.apache.spark.scheduler._
 import org.apache.spark.storage.BlockManagerId
+import uk.ic.ac.imperial.simulator.JsonExtractor.{Job, MetaProperties}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -38,6 +39,8 @@ object Simulator {
   var sc: SparkContext = _
 
   var jobSubmitter: JobSubmitter = _
+
+  val jobsToSubmit: mutable.Map[Int, ArrayBuffer[Job]] = new mutable.HashMap[Int, ArrayBuffer[Job]]()
 
   def setupTaskScheduler(executors: Int, coresPerExec: Int, stopwatch: Stopwatch,
                          finishTimes: mutable.HashMap[Int, ArrayBuffer[Long]],
@@ -59,7 +62,19 @@ object Simulator {
   def main(args: Array[String]): Unit = {
     val stopwatch = new Stopwatch
 
-    val simulatorConfiguration = JsonExtractor.fromJsonFileToObject("conf/simulator_configuration.json")
+    val configuration = JsonExtractor.fromJsonFileToObject("conf/simulator_configuration.json")
+    val simulatorConfiguration = configuration.simulatorConfiguration
+    val jobProperties = configuration.jobs.map(job => job.metaproperties)
+
+    jobProperties.zipWithIndex.foreach(entry => {
+      val metaproperties = entry._1
+      val index = entry._2
+      for (i <- Range(metaproperties.arrivesAt, metaproperties.repeatsTimes, metaproperties.repeatsEvery)) {
+        val jobsAtTime = jobsToSubmit.getOrElse(i, ArrayBuffer.empty[Job])
+        jobsAtTime.+=(configuration.jobs(index))
+        jobsToSubmit.put(i, jobsAtTime)
+      }
+    })
 
     setupTaskScheduler(simulatorConfiguration.executors,
       simulatorConfiguration.coresPerExec,
@@ -72,11 +87,11 @@ object Simulator {
     setupDAGScheduler()
 
     // First Job
-    val jobOneProperties = new Properties()
-    jobOneProperties.setProperty("duration", "4")
-    jobOneProperties.setProperty("spark.scheduler.pool", "batch")
-//    jobOneProperties.setProperty("neptune_pri", "2")
-    jobSubmitter.submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = jobOneProperties)
+//    val jobOneProperties = new Properties()
+//    jobOneProperties.setProperty("duration", "4")
+//    jobOneProperties.setProperty("spark.scheduler.pool", "batch")
+////    jobOneProperties.setProperty("neptune_pri", "2")
+//    jobSubmitter.submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = jobOneProperties)
 
     // More jobs...
 //    val jobsProperties = new Properties()
@@ -88,13 +103,15 @@ object Simulator {
     // Second Job
     val jobTwoProperties = new Properties()
     jobTwoProperties.setProperty("duration", "1")
-    jobTwoProperties.setProperty("spark.scheduler.pool", "streaming")
-//    jobTwoProperties.setProperty("neptune_pri", "1")
-    jobSubmitter.submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = jobTwoProperties)
+//    jobTwoProperties.setProperty("spark.scheduler.pool", "streaming")
+////    jobTwoProperties.setProperty("neptune_pri", "1")
+//    jobSubmitter.submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = jobTwoProperties)
+
+//    jobSubmitter.submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = jobTwoProperties)
 
     val inner = new Breaks
 
-    while (dagScheduler.waitingStages.nonEmpty || dagScheduler.runningStages.nonEmpty) {
+    do {
       inner.breakable {
         for (tick <- stopwatch.time to Integer.MAX_VALUE) {
           stopwatch.time = tick
@@ -140,12 +157,14 @@ object Simulator {
 
             inner.break
           }
+
+          jobsToSubmit.getOrElse(tick, ArrayBuffer.empty[Job]).map(job => jobSubmitter.submit(sc, job))
         }
       }
 
       // Sleep for a short period of time to avoid aggressive looping so that messages can propagate.
       Thread.sleep(500)
-    }
+    } while (dagScheduler.waitingStages.nonEmpty || dagScheduler.runningStages.nonEmpty)
 
     for (i <- taskPrinter.indices) {
       val entry = taskPrinter(i)

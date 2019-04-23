@@ -1,5 +1,24 @@
 {
-  "executors": 4,
-  "coresPerExec": 1,
-  "sparkSchedulerMode": "FIFO"
+  "simulatorConfiguration": {
+    "executors": 4,
+    "coresPerExec": 1,
+    "sparkSchedulerMode": "FIFO"
+  },
+  "jobs": [
+    {
+      "representation" : {
+
+      },
+      "properties": {
+        "duration": 2,
+        "sparkSchedulerPool": "streaming",
+        "neptunePri": 1
+      },
+      "metaproperties": {
+        "arrivesAt": 0,
+        "repeatsEvery": 1,
+        "repeatsTimes": 2
+      }
+    }
+  ]
 }

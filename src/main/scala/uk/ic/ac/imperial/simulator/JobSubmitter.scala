@@ -19,10 +19,11 @@ package uk.ic.ac.imperial.simulator
 
 import java.util.Properties
 
-import org.apache.spark.TaskContext
+import org.apache.spark.{SparkContext, TaskContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler._
 import org.apache.spark.util.CallSite
+import uk.ic.ac.imperial.simulator.JsonExtractor.Job
 
 import scala.collection.mutable
 
@@ -49,6 +50,10 @@ class JobSubmitter(dagScheduler: DAGScheduler) {
 
   private[simulator] def runEvent(event: DAGSchedulerEvent) {
     dagEventProcessLoopTester.post(event)
+  }
+
+  private[simulator] def submit(sc: SparkContext, job: Job): Int = {
+    submit(JobGenerator.generate_parallel_job(sc), Array(0), properties = job.properties.properties)
   }
 
 }
