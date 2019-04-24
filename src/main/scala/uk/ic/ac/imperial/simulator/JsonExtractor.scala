@@ -2,49 +2,86 @@ package uk.ic.ac.imperial.simulator
 
 import java.util.Properties
 
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.read
+import org.json4s.jackson.JsonMethods._
+import org.json4s.{DefaultFormats, _}
 
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 object JsonExtractor {
-  case class SimulatorConfiguration(executors: Int, coresPerExec: Int, sparkSchedulerMode: String)
-
-  case class MetaProperties(arrivesAt: Int, repeatsEvery: Int, repeatsTimes: Int)
-
-//  case class Job(rdd: RDD[_], properties: Properties)
 
   implicit val formats: DefaultFormats.type = DefaultFormats
 
-//  def fromJsonToSimulatorConfiguration(json: JValue): SimulatorConfiguration = {
-//    val executors = (json \ "executors").extract[Int]
-//    val coresPerExec = (json \ "cores_per_executor").extract[Int]
-//    val sparkSchedulerMode = (json \ "spark_scheduler_mode").extract[String]
-//    SimulatorConfiguration(executors, coresPerExec, sparkSchedulerMode)
-//  }
+  private val FIFO = "FIFO"
+  private val FAIR = "FAIR"
+  private val NEPTUNE = "NEPTUNE"
 
-  case class Configuration(simulatorConfiguration: SimulatorConfiguration, jobs: Seq[Job])
-
-  case class Job(representation: Representation, properties: JobProperties, metaproperties: MetaProperties)
-
-  case class JobProperties(duration: String, sparkSchedulerPool: String, neptunePri: String) {
-    val properties = new Properties()
-    properties.setProperty("duration", duration)
-    properties.setProperty("spark.scheduler.pool", sparkSchedulerPool)
-    properties.setProperty("neptune_pri", neptunePri)
+  def getSparkSchedulerConfiguration(sparkSchedulerMode: String): ArrayBuffer[(String, String)] = {
+    sparkSchedulerMode match {
+      case FIFO => ArrayBuffer("spark.scheduler.mode" -> FIFO)
+      case FAIR => ArrayBuffer("spark.scheduler.mode" -> FAIR,
+        "spark.scheduler.allocation.file" -> "conf/fairscheduler_simulator.xml")
+      case NEPTUNE => ArrayBuffer("spark.scheduler.mode" -> NEPTUNE,
+        "spark.neptune.task.coroutines" -> "true")
+    }
   }
 
-  case class Representation(stages: List[Stage])
+  def fromJsonToSimulatorConfiguration(json: JValue): SimulatorConfiguration = {
+    val executors = (json \ "executors").extract[Int]
+    val coresPerExec = (json \ "coresPerExec").extract[Int]
+    val sparkSchedulerMode = getSparkSchedulerConfiguration((json \ "sparkSchedulerMode").extract[String])
+    SimulatorConfiguration(executors, coresPerExec, sparkSchedulerMode)
+  }
+
+  def fromJsonToJobSubmissionTimeMap(json: JValue): mutable.Map[Int, ArrayBuffer[Job]] = {
+    val jobsToSubmit = new mutable.HashMap[Int, ArrayBuffer[Job]]()
+
+    json.extract[List[JValue]].foreach(jsonValue => {
+      val range = fromJsonMetapropertiesToRange(jsonValue \ "metaproperties")
+
+      val job = Job(((jsonValue \ "representation") \ "stages").extract[List[Stage]],
+        fromJsonPropertiesToProperties(jsonValue \ "properties"))
+
+      for (i <- range) {
+        val jobsAtTime = jobsToSubmit.getOrElse(i, ArrayBuffer.empty[Job])
+        jobsAtTime.+=(job)
+        jobsToSubmit.put(i, jobsAtTime)
+      }
+    })
+
+    jobsToSubmit
+  }
+
+  def fromJsonPropertiesToProperties(json: JValue): Properties = {
+    val properties = new Properties()
+    properties.setProperty("duration", (json \ "duration").extract[String])
+    properties.setProperty("spark.scheduler.pool", (json \ "sparkSchedulerPool").extract[String])
+    properties.setProperty("neptune_pri", (json \ "neptunePri").extract[String])
+    properties
+  }
+
+  def fromJsonMetapropertiesToRange(json: JValue): Range = {
+    val from = (json \ "arrivesAt").extract[Int]
+    val step = (json \ "repeatsEvery").extract[Int]
+    val numberOfRepetitions = (json \ "repeatsTimes").extract[Int]
+
+    Range(from, from + step * numberOfRepetitions, step)
+  }
+
+  case class SimulatorConfiguration(executors: Int, coresPerExec: Int, confs: ArrayBuffer[(String, String)])
+
+  case class Job(representation: List[Stage], properties: Properties)
 
   case class Stage(id: Int, dependsOn: List[Int])
 
-  def fromJsonFileToObject(filename: String): Configuration = {
+  def fromJsonFileToObject(filename: String): (SimulatorConfiguration, mutable.Map[Int, ArrayBuffer[Job]]) = {
     val bufferedSource = Source.fromFile(filename).getLines.mkString
 
-//    val json = parse(bufferedSource)
-//    fromJsonToSimulatorConfiguration(json \ "simulator_configuration")
-//    fromJsonToJobs(json \ "jobs")
+    val json = parse(bufferedSource)
+    val simulatorConfiguration = fromJsonToSimulatorConfiguration(json \ "simulatorConfiguration")
+    val jobs = fromJsonToJobSubmissionTimeMap(json \ "jobs")
 
-    read[Configuration](bufferedSource)
+    (simulatorConfiguration, jobs)
   }
 }

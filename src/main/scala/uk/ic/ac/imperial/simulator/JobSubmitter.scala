@@ -33,7 +33,7 @@ class JobSubmitter(dagScheduler: DAGScheduler) {
   val results = new mutable.HashMap[Int, Any]()
   var failure: Exception = _
 
-  private[simulator] def submit(
+  private def submit(
                       rdd: RDD[_],
                       partitions: Array[Int],
                       func: (TaskContext, Iterator[_]) => _ = (context: TaskContext, it: Iterator[(_)]) => it.next.asInstanceOf[Tuple2[_, _]]._1,
@@ -48,12 +48,12 @@ class JobSubmitter(dagScheduler: DAGScheduler) {
     jobId
   }
 
-  private[simulator] def runEvent(event: DAGSchedulerEvent) {
+  private def runEvent(event: DAGSchedulerEvent) {
     dagEventProcessLoopTester.post(event)
   }
 
   private[simulator] def submit(sc: SparkContext, job: Job): Int = {
-    submit(JobGenerator.generate_job_from_representation(sc, job.representation), Array(0), properties = job.properties.properties)
+    submit(JobGenerator.generate_job_from_representation(sc, job.representation), Array(0), properties = job.properties)
   }
 
 }

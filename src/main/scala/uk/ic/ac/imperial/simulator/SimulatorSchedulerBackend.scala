@@ -24,7 +24,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 class SimulatorSchedulerBackend(val stopwatch: Stopwatch, val taskScheduler: TaskSchedulerImpl,
-                                val finishTimes: mutable.HashMap[Int, ArrayBuffer[Long]],
+                                val finishTimes: mutable.Map[Int, ArrayBuffer[Long]],
                                 taskPrinter: mutable.ArrayBuffer[((String, Long), mutable.ArrayBuffer[(Int, Int, String)])],
                                 val executors: Int = 1, val cores: Int = 1) extends SchedulerBackend {
 

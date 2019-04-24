@@ -17,12 +17,10 @@
 
 package uk.ic.ac.imperial.simulator
 
-import java.util.Properties
-
 import org.apache.spark._
 import org.apache.spark.scheduler._
 import org.apache.spark.storage.BlockManagerId
-import uk.ic.ac.imperial.simulator.JsonExtractor.{Job, MetaProperties}
+import uk.ic.ac.imperial.simulator.JsonExtractor.{Job, SimulatorConfiguration}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -40,51 +38,29 @@ object Simulator {
 
   var jobSubmitter: JobSubmitter = _
 
-  val jobsToSubmit: mutable.Map[Int, ArrayBuffer[Job]] = new mutable.HashMap[Int, ArrayBuffer[Job]]()
-
-  def setupTaskScheduler(executors: Int, coresPerExec: Int, stopwatch: Stopwatch,
-                         finishTimes: mutable.HashMap[Int, ArrayBuffer[Long]],
-                         taskPrinter: mutable.ArrayBuffer[((String, Long), mutable.ArrayBuffer[(Int, Int, String)])],
-                         confs: ArrayBuffer[(String, String)]): Unit = {
+  def setupTaskScheduler(simulatorConfiguration: SimulatorConfiguration, stopwatch: Stopwatch,
+                         finishTimes: mutable.Map[Int, ArrayBuffer[Long]],
+                         taskPrinter: mutable.ArrayBuffer[((String, Long), mutable.ArrayBuffer[(Int, Int, String)])]): Unit = {
     val conf = new SparkConf().setMaster("local").setAppName("Simulator")
-    confs.foreach { case (k, v) => conf.set(k, v) }
+    simulatorConfiguration.confs.foreach { case (k, v) => conf.set(k, v) }
     sc = new SparkContext(conf)
     taskScheduler = new TaskSchedulerImpl(sc)
     taskScheduler.initialize(new SimulatorSchedulerBackend(stopwatch, taskScheduler, finishTimes,
-      taskPrinter, executors, coresPerExec))
+      taskPrinter, simulatorConfiguration.executors, simulatorConfiguration.coresPerExec))
   }
 
-  def setupDAGScheduler(): Unit = {
+  def setupDAGSchedulerAndJobSubmitter(): Unit = {
     dagScheduler = new DAGScheduler(sc, taskScheduler)
     jobSubmitter = new JobSubmitter(dagScheduler)
   }
 
   def main(args: Array[String]): Unit = {
+    val (simulatorConfiguration, jobsSubmissionTimeMap) = JsonExtractor.fromJsonFileToObject(args(0))
+
     val stopwatch = new Stopwatch
-
-    val configuration = JsonExtractor.fromJsonFileToObject("conf/simulator_configuration.json")
-    val simulatorConfiguration = configuration.simulatorConfiguration
-    val jobProperties = configuration.jobs.map(job => job.metaproperties)
-
-    jobProperties.zipWithIndex.foreach(entry => {
-      val metaproperties = entry._1
-      val index = entry._2
-      for (i <- Range(metaproperties.arrivesAt, metaproperties.repeatsTimes, metaproperties.repeatsEvery)) {
-        val jobsAtTime = jobsToSubmit.getOrElse(i, ArrayBuffer.empty[Job])
-        jobsAtTime.+=(configuration.jobs(index))
-        jobsToSubmit.put(i, jobsAtTime)
-      }
-    })
-
-    setupTaskScheduler(simulatorConfiguration.executors,
-      simulatorConfiguration.coresPerExec,
-      stopwatch,
-      finishTimes,
-      taskPrinter,
-      Configuration.getConfiguration(simulatorConfiguration.sparkSchedulerMode))
-
+    setupTaskScheduler(simulatorConfiguration, stopwatch, finishTimes, taskPrinter)
     taskScheduler.start()
-    setupDAGScheduler()
+    setupDAGSchedulerAndJobSubmitter()
 
     val inner = new Breaks
 
@@ -127,7 +103,7 @@ object Simulator {
              This is due to the fact that if the messages have not propagated, we may start running a parent
              dependency right before we check whether its child's dependencies are fulfilled. If that is the
              case and we have the resources for the child we might start running the child.
-             TODO: [How is dealt with in practice?]
+             TODO: [How is this dealt with in practice?]
              */
             Thread.sleep(500)
             taskScheduler.backend.reviveOffers()
@@ -135,7 +111,7 @@ object Simulator {
             inner.break
           }
 
-          jobsToSubmit.getOrElse(tick, ArrayBuffer.empty[Job]).map(job => jobSubmitter.submit(sc, job))
+          jobsSubmissionTimeMap.getOrElse(tick, ArrayBuffer.empty[Job]).map(job => jobSubmitter.submit(sc, job))
         }
       }
 
