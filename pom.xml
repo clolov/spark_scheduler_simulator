@@ -34,7 +34,20 @@
 
     <dependency>
       <groupId>org.json4s</groupId>
-      <artifactId>json4s-jackson_${scala.version}</artifactId>
+      <artifactId>json4s-jackson_2.11</artifactId>
+      <version>3.6.5</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.scalactic</groupId>
+      <artifactId>scalactic_2.11</artifactId>
+      <version>3.0.5</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_2.11</artifactId>
+      <version>3.0.5</version>
     </dependency>
   </dependencies>
 

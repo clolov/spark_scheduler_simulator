@@ -31,6 +31,7 @@ object Simulator {
 
   var finishTimes = new mutable.HashMap[Int, ArrayBuffer[Long]]()
   var taskPrinter: mutable.ArrayBuffer[((String, Long), mutable.ArrayBuffer[(Int, Int, String)])] = mutable.ArrayBuffer.empty[((String, Long), mutable.ArrayBuffer[(Int, Int, String)])]
+  var toPrint: String = ""
 
   var dagScheduler: DAGScheduler = _
   var taskScheduler: TaskSchedulerImpl = _
@@ -126,6 +127,8 @@ object Simulator {
       val timeline = runtimes.foldLeft("")( (acc, entry) => {
         acc + entry._3*(entry._2 - entry._1)
       })
+      toPrint += (timeline + " "*10 + stageAndTask + " "*10 + runtimes)
+      toPrint += "\n"
       System.out.println(timeline + " "*10 + stageAndTask + " "*10 + runtimes)
     }
   }
