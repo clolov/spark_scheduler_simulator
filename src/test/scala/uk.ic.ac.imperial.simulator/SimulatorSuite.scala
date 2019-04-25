@@ -1,13 +1,26 @@
 package uk.ic.ac.imperial.simulator
 
+import java.io.{ByteArrayOutputStream, File, PrintWriter}
+
 import org.scalatest.FunSuite
+
+import scala.io.Source
 
 class SimulatorSuite extends FunSuite {
 
-  test("simple") {
-    Simulator.main(Array("conf/simulator_configuration.json"))
-    val expectedToPrint = "||          (TaskSet_0.0,0)          ArrayBuffer((0,0, ), (0,2,|))\n||          (TaskSet_1.0,1)          ArrayBuffer((0,0, ), (0,2,|))\n||          (TaskSet_2.0,2)          ArrayBuffer((0,0, ), (0,2,|))\n|          (TaskSet_4.0,3)          ArrayBuffer((0,0, ), (0,1,|))\n |          (TaskSet_5.0,4)          ArrayBuffer((0,1, ), (1,2,|))\n  ||          (TaskSet_3.0,5)          ArrayBuffer((0,2, ), (2,4,|))\n  |          (TaskSet_6.0,6)          ArrayBuffer((0,2, ), (2,3,|))\n   |          (TaskSet_7.0,7)          ArrayBuffer((0,3, ), (3,4,|))\n"
-    assert(expectedToPrint == Simulator.toPrint)
+  private val configurationsPrefix = "src/test/resources/configurations/"
+  private val outputsPrefix = "src/test/resources/outputs/"
+
+  test("FIFO_with_4_execs_1_core_2_jobs") {
+    val outCapture = new ByteArrayOutputStream()
+    Console.withOut(outCapture) {
+      Simulator.main(Array(configurationsPrefix + "FIFO_with_4_execs_1_core_2_jobs.json"))
+    }
+    val expectedToPrint = Source.fromFile(outputsPrefix + "FIFO_with_4_execs_1_core_2_jobs.txt").getLines.mkString("\n") + "\n"
+    assert(expectedToPrint == outCapture.toString)
+//    val pw = new PrintWriter(new File("FIFO_with_4_execs_1_core_2_jobs.txt" ))
+//    pw.write(expectedToPrint)
+//    pw.close()
   }
 
 }
