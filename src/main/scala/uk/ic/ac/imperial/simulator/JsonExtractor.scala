@@ -31,7 +31,8 @@ object JsonExtractor {
     val executors = (json \ "executors").extract[Int]
     val coresPerExec = (json \ "coresPerExec").extract[Int]
     val sparkSchedulerMode = getSparkSchedulerConfiguration((json \ "sparkSchedulerMode").extract[String])
-    SimulatorConfiguration(executors, coresPerExec, sparkSchedulerMode)
+    val sparkDefaultParallelism = "spark.default.parallelism" -> (json \ "sparkDefaultParallelism").extract[String]
+    SimulatorConfiguration(executors, coresPerExec, sparkSchedulerMode.+=(sparkDefaultParallelism))
   }
 
   def fromJsonToJobSubmissionTimeMap(json: JValue): mutable.Map[Int, ArrayBuffer[Job]] = {

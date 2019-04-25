@@ -2,7 +2,8 @@
   "simulatorConfiguration": {
     "executors": 4,
     "coresPerExec": 1,
-    "sparkSchedulerMode": "FIFO"
+    "sparkSchedulerMode": "FIFO",
+    "sparkDefaultParallelism": 8
   },
   "jobs": [
     {
@@ -14,54 +15,15 @@
           },
           {
             "id": 2,
-            "dependsOn": []
-          },
-          {
-            "id": 3,
-            "dependsOn": []
-          },
-          {
-            "id": 4,
-            "dependsOn": [1, 2, 3]
+            "dependsOn": [1]
           }
         ]
       },
       "properties": {
         "duration": 2,
+        "parallelism": 1,
         "sparkSchedulerPool": "batch",
         "neptunePri": 2
-      },
-      "metaproperties": {
-        "arrivesAt": 0,
-        "repeatsEvery": 1,
-        "repeatsTimes": 1
-      }
-    },
-    {
-      "representation": {
-        "stages": [
-          {
-            "id": 1,
-            "dependsOn": []
-          },
-          {
-            "id": 2,
-            "dependsOn": []
-          },
-          {
-            "id": 3,
-            "dependsOn": []
-          },
-          {
-            "id": 4,
-            "dependsOn": [1, 2, 3]
-          }
-        ]
-      },
-      "properties": {
-        "duration": 1,
-        "sparkSchedulerPool": "streaming",
-        "neptunePri": 1
       },
       "metaproperties": {
         "arrivesAt": 0,

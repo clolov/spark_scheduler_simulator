@@ -86,8 +86,10 @@ object JobGenerator {
 
     for (stage <- stages) {
       val shuffleDependenciesOfStage = stage.dependsOn.map(_ - 1).map(index => shuffleDependencies(index))
-      val newRdd = new MyRDD(sc, 1, shuffleDependenciesOfStage)
+      val numPartitions = sc.conf.get("spark.default.parallelism").toInt
+      val newRdd = new MyRDD(sc, numPartitions, shuffleDependenciesOfStage)
       rdds.+=(newRdd)
+      // TODO: Is there a need for accurate partition number in the HashPartitioner?
       shuffleDependencies.+=(new ShuffleDependency(newRdd, new HashPartitioner(newRdd.context.conf, 1)))
     }
 

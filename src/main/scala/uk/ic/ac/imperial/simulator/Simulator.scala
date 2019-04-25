@@ -128,5 +128,7 @@ object Simulator {
       })
       println(timeline + " "*10 + stageAndTask + " "*10 + runtimes)
     }
+
+    print("finishTimes " + finishTimes.mkString(" "))
   }
 }
