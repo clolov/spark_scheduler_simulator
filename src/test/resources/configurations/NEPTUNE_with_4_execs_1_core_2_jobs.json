@@ -2,7 +2,7 @@
   "simulatorConfiguration": {
     "executors": 4,
     "coresPerExec": 1,
-    "sparkSchedulerMode": "FIFO",
+    "sparkSchedulerMode": "NEPTUNE",
     "sparkDefaultParallelism": 1
   },
   "jobs": [

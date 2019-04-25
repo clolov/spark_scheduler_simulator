@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.control.Breaks
 
 // scalastyle:off println
-object Simulator {
+class Simulator {
 
   var finishTimes = new mutable.HashMap[Int, ArrayBuffer[Long]]()
   var taskPrinter: mutable.ArrayBuffer[((String, Long), mutable.ArrayBuffer[(Int, Int, String)])] = mutable.ArrayBuffer.empty[((String, Long), mutable.ArrayBuffer[(Int, Int, String)])]
@@ -128,7 +128,5 @@ object Simulator {
       })
       println(timeline + " "*10 + stageAndTask + " "*10 + runtimes)
     }
-
-    print("finishTimes " + finishTimes.mkString(" "))
   }
 }
