@@ -21,7 +21,6 @@
       },
       "properties": {
         "duration": 2,
-        "parallelism": 1,
         "sparkSchedulerPool": "batch",
         "neptunePri": 2
       },
