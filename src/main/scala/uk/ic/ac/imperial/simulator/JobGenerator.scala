@@ -29,7 +29,7 @@ object JobGenerator {
     *             \                /
     *               <-------------
     */
-  private[simulator] def generate_sequential_job(sc: SparkContext): MyRDD = {
+  private[simulator] def generateSequentialJob(sc: SparkContext): MyRDD = {
     val rddA = new MyRDD(sc, 1, Nil)
     val shuffleDepA = new ShuffleDependency(rddA, new HashPartitioner(rddA.context.conf, 1))
 
@@ -52,7 +52,7 @@ object JobGenerator {
     *                /
     * [C] <--(s_C)---
     */
-  private[simulator] def generate_parallel_job(sc: SparkContext): MyRDD = {
+  private[simulator] def generateParallelJob(sc: SparkContext): MyRDD = {
     val rddA = new MyRDD(sc, 1, Nil)
     val shuffleDepA = new ShuffleDependency(rddA, new HashPartitioner(rddA.context.conf, 1))
 
@@ -70,7 +70,7 @@ object JobGenerator {
     *                \
     * [B] <--(s_B) <-- [C]
     */
-  private[simulator] def generate_simpler_parallel_job(sc: SparkContext): MyRDD = {
+  private[simulator] def generateSimplerParallelJob(sc: SparkContext): MyRDD = {
     val rddA = new MyRDD(sc, 1, Nil)
     val shuffleDepA = new ShuffleDependency(rddA, new HashPartitioner(rddA.context.conf, 1))
 
@@ -80,7 +80,7 @@ object JobGenerator {
     new MyRDD(sc, 1, List(shuffleDepA, shuffleDepB))
   }
 
-  private[simulator] def generate_job_from_representation(sc: SparkContext, stages: List[Stage]): MyRDD = {
+  private[simulator] def generateJobFromRepresentation(sc: SparkContext, stages: List[Stage]): MyRDD = {
     val rdds = ArrayBuffer.empty[MyRDD]
     val shuffleDependencies = ArrayBuffer.empty[ShuffleDependency[_, _, _]]
 

@@ -53,7 +53,7 @@ class JobSubmitter(dagScheduler: DAGScheduler) {
   }
 
   private[simulator] def submit(sc: SparkContext, job: Job): Int = {
-    val myRdd = JobGenerator.generate_job_from_representation(sc, job.representation)
+    val myRdd = JobGenerator.generateJobFromRepresentation(sc, job.representation)
     submit(myRdd, myRdd.getPartitions.map(partition => partition.index), properties = job.properties)
   }
 
