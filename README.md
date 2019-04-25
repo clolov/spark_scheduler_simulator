@@ -1,17 +1,17 @@
-##Spark Scheduler Simulator
+## Spark Scheduler Simulator
 
 
-###Background
+### Background
 
 The purpose of this project is to help understanding how the scheduling decisions are made by the task scheduling
 policies in Apache Spark.
 
-###Requirements
+### Requirements
 
 A copy of [Neptune Simulator Dependencies](https://github.com/pgaref/Neptune/tree/simulator_dependencies) is required in
 the local Maven repository.
 
-###Configuration
+### Configuration
 
 **ALL FIELDS IN THE CONFIGURATION ARE CURRENTLY REQUIRED**
 
